@@ -1,6 +1,6 @@
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 class mergeThread extends Thread {
     int[] array;
@@ -240,18 +240,65 @@ public class mergesort {
 
 
     public static void main(String[] args) {
-        // Example array to sort
-        int[] array = createRandomArray(100_000_000);  // Assuming this method creates a random array
-
-        // Number of threads to use
         int numThreads = 8;
+        // Using mergeThread
+        int[] arrayThread = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        long startTimeThread = System.nanoTime();
+        mergeThread mergeThreadTask = new mergeThread(arrayThread, 0, arrayThread.length - 1, numThreads);
+        mergeThreadTask.start();
+        try {
+            mergeThreadTask.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long endTimeThread = System.nanoTime();
+        System.out.println("Is array sorted using mergeThread: " + isArraySorted(arrayThread));
+        System.out.println("Time taken using mergeThread: " + (endTimeThread - startTimeThread) / 1_000_000 + " ms");
+        
 
-        mergeForkJoin task = new mergeForkJoin(array, 0, array.length - 1, numThreads);
-        ForkJoinPool pool = new ForkJoinPool(numThreads);
-        pool.invoke(task);
-        pool.shutdown();
+        // Using mergeExecutor
+        int[] arrayExecutor = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        long startTimeExecutor = System.nanoTime();
+        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+        mergeExecutor mergeExecutorTask = new mergeExecutor(arrayExecutor, 0, arrayExecutor.length - 1, numThreads);
+        executorService.execute(mergeExecutorTask);
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long endTimeExecutor = System.nanoTime();
+        System.out.println("Is array sorted using mergeExecutor: " + isArraySorted(arrayExecutor));
+        System.out.println("Time taken using mergeExecutor: " + (endTimeExecutor - startTimeExecutor) / 1_000_000 + " ms");
+        
 
-        // Check if the array is sorted
-        System.out.println("Is array sorted: " + isArraySorted(array));
+        // Using mergeStreams
+        int[] arrayStreams = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        long startTimeStreams = System.nanoTime();
+        mergeStreams mergeStreamsTask = new mergeStreams(arrayStreams, 0, arrayStreams.length - 1, numThreads);
+        Thread streamThread = new Thread(mergeStreamsTask);
+        streamThread.start();
+        try {
+            streamThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long endTimeStreams = System.nanoTime();
+        System.out.println("Is array sorted using mergeStreams: " + isArraySorted(arrayStreams));
+        System.out.println("Time taken using mergeStreams: " + (endTimeStreams - startTimeStreams) / 1_000_000 + " ms");
+        
+
+
+        // Using mergeForkJoin
+        int[] arrayForkJoin = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        long startTimeForkJoin = System.nanoTime();
+        mergeForkJoin mergeForkJoinTask = new mergeForkJoin(arrayForkJoin, 0, arrayForkJoin.length - 1, numThreads);
+        ForkJoinPool forkJoinPool = new ForkJoinPool(numThreads);
+        forkJoinPool.invoke(mergeForkJoinTask);
+        forkJoinPool.shutdown();
+        long endTimeForkJoin = System.nanoTime();
+        System.out.println("Is array sorted using mergeForkJoin: " + isArraySorted(arrayForkJoin));
+        System.out.println("Time taken using mergeForkJoin: " + (endTimeForkJoin - startTimeForkJoin) / 1_000_000 + " ms");        
     }
 }
