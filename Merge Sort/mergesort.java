@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.IntStream;
 
 class mergeThread extends Thread {
     int[] array;
@@ -89,14 +90,73 @@ class mergeExecutor implements Runnable {
 }
 
 class mergeStreams implements Runnable {
+    int[] array;
+    int start;
+    int end;
+    int numThreads; 
 
-    
+    mergeStreams(int[] array, int start, int end, int numThreads) {
+        this.array = array;
+        this.start = start;
+        this.end = end;
+        this.numThreads = numThreads;
+    }
 
     @Override
     public void run() {
-        throw new UnsupportedOperationException("Unimplemented method 'run'");
+        parallelMergeSort(array, start, end, numThreads);
     }
-    
+
+    public void parallelMergeSort(int[] array, int start, int end, int numThreads) {
+        if (numThreads <= 1) {
+            mergesort.mergeSort(array, start, end);
+        }
+        else {
+            int middle = start + (end - start)/2;
+
+            // Parallel execution of the two halves of the array
+            IntStream.range(0, 2).parallel().forEach(i -> {
+                if (i == 0) {
+                    parallelMergeSort(array, start, middle, numThreads / 2);
+                } else {
+                    parallelMergeSort(array, middle + 1, end, numThreads / 2);
+                }
+            });
+
+            // Merging the sorted halves
+            mergesort.merge(array, start, middle, end);
+        }
+    }
+
+}
+
+class mergeForkJoin extends RecursiveAction {
+    int[] array;
+    int start;
+    int end;
+    int numThreads; 
+
+    mergeForkJoin(int[] array, int start, int end, int numThreads) {
+        this.array = array;
+        this.start = start;
+        this.end = end;
+        this.numThreads = numThreads;
+    }
+
+    @Override
+    protected void compute() {
+        if (numThreads <= 1) {
+            mergesort.mergeSort(array, start, end); // Use sequential sort for small segments or when numThreads is low
+        } else {
+            int middle = start + (end - start) / 2;
+            mergeForkJoin leftTask = new mergeForkJoin(array, start, middle, numThreads / 2);
+            mergeForkJoin rightTask = new mergeForkJoin(array, middle + 1, end, numThreads / 2);
+
+            invokeAll(leftTask, rightTask); // Process sub-tasks in parallel
+
+            mergesort.merge(array, start, middle, end); // Merge the sorted halves
+        }
+    }
 }
 
 
@@ -186,17 +246,10 @@ public class mergesort {
         // Number of threads to use
         int numThreads = 8;
 
-        // Create an ExecutorService with a fixed number of threads
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-
-        // Submit the sorting task to the executor
-        executor.submit(new mergeExecutor(array, 0, array.length - 1, numThreads));
-
-        // Shutdown the executor and wait for all tasks to complete
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-
-        }
+        mergeForkJoin task = new mergeForkJoin(array, 0, array.length - 1, numThreads);
+        ForkJoinPool pool = new ForkJoinPool(numThreads);
+        pool.invoke(task);
+        pool.shutdown();
 
         // Check if the array is sorted
         System.out.println("Is array sorted: " + isArraySorted(array));
