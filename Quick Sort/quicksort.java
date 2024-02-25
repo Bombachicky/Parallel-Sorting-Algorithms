@@ -277,8 +277,8 @@ public class quicksort {
     }
 
     public static void main(String[] args) {
-        final int SIZE = 100_000_000; // 100 million elements
-        int numThreads = Runtime.getRuntime().availableProcessors(); // Based on available processors
+        final int SIZE = 100_000_00; // 100 million elements
+        int numThreads = 1; // Based on available processors
     
         // Create a random array
         int[] originalArray = createRandomArray(SIZE);

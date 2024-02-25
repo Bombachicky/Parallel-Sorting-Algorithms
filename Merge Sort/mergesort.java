@@ -25,7 +25,7 @@ class mergeThread extends Thread {
         }
         else {
             int middle = start + (end - start)/2;
-            Thread mergeLeft = new mergeThread(array, start, middle, numThreads / 2);
+            Thread mergeLeft = new mergeThread(array, start, middle,  numThreads / 2);
             Thread mergeRight = new mergeThread(array, middle + 1, end, numThreads / 2);
 
             mergeLeft.start();
@@ -242,7 +242,7 @@ public class mergesort {
     public static void main(String[] args) {
         int numThreads = 8;
         // Using mergeThread
-        int[] arrayThread = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        int[] arrayThread = createRandomArray(100_000_00); // Smaller size for quick demonstration
         long startTimeThread = System.nanoTime();
         mergeThread mergeThreadTask = new mergeThread(arrayThread, 0, arrayThread.length - 1, numThreads);
         mergeThreadTask.start();
@@ -257,7 +257,7 @@ public class mergesort {
         
 
         // Using mergeExecutor
-        int[] arrayExecutor = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        int[] arrayExecutor = createRandomArray(100_000); // Smaller size for quick demonstration
         long startTimeExecutor = System.nanoTime();
         ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
         mergeExecutor mergeExecutorTask = new mergeExecutor(arrayExecutor, 0, arrayExecutor.length - 1, numThreads);
@@ -274,7 +274,7 @@ public class mergesort {
         
 
         // Using mergeStreams
-        int[] arrayStreams = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        int[] arrayStreams = createRandomArray(100_000); // Smaller size for quick demonstration
         long startTimeStreams = System.nanoTime();
         mergeStreams mergeStreamsTask = new mergeStreams(arrayStreams, 0, arrayStreams.length - 1, numThreads);
         Thread streamThread = new Thread(mergeStreamsTask);
@@ -291,7 +291,7 @@ public class mergesort {
 
 
         // Using mergeForkJoin
-        int[] arrayForkJoin = createRandomArray(100_000_000); // Smaller size for quick demonstration
+        int[] arrayForkJoin = createRandomArray(100_000); // Smaller size for quick demonstration
         long startTimeForkJoin = System.nanoTime();
         mergeForkJoin mergeForkJoinTask = new mergeForkJoin(arrayForkJoin, 0, arrayForkJoin.length - 1, numThreads);
         ForkJoinPool forkJoinPool = new ForkJoinPool(numThreads);
