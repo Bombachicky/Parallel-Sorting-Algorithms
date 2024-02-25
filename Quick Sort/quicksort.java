@@ -114,35 +114,16 @@ class quickForkJoin extends RecursiveAction {
     }
 
     @Override
-    public void compute() {
-        parallelQuickSort(array, low, high, numThreads);
-    }
-
-    public void parallelQuickSort(int[] array, int low, int high, int numThreads){
-
+    protected void compute() {
         if (numThreads <= 1) {
-            quicksort.quickSort(array, low, high);
+            quicksort.quickSort(array, low, high); 
         } else {
-            // Divide the array into segments and sort each segment in a separate thread
-            ForkJoinPool pool = new ForkJoinPool(numThreads);          
-            for (int i = 0; i < numThreads; i++) {
-                int start = low + i * (high - low) / numThreads;
-                int end = low + (i + 1) * (high - low) / numThreads;
-                // Adjust the end for the last segment
-                if (i == numThreads - 1) {
-                    end = high;
-                }
-
-                pool.invoke(new quickForkJoin(array, start, end, 1)); // Set numThreads to 1 for these threads
-            }
-            
-            pool.shutdown();
-            while (!pool.isTerminated()){
-
-            }
-
-            quicksort.mergeSort(array, low, high);
+            int mid = low + (high - low) / 2;
+            invokeAll(new quickForkJoin(array, low, mid, numThreads / 2),
+                      new quickForkJoin(array, mid + 1, high, numThreads / 2));
         }
+
+        quicksort.mergeSort(array, low, high);
     }
 }
 
@@ -256,29 +237,25 @@ public class quicksort {
         }
     }
 
-    public static int[] quickSortUsingStreams(int[] array) {
-        if (array.length <= 1) {
-            return array;
-        }
+    // Parallel sort method
+    public static void parallelQuickSort(int[] array, int numThreads) {
+        int divisions = array.length / numThreads;
 
-        int pivot = array[0]; // Choosing the first element as the pivot for simplicity
+        // Sort each chunk using parallel streams
+        IntStream.range(0, (array.length + divisions - 1) / divisions)
+                .parallel()
+                .forEach(i -> {
+                    int start = i * divisions;
+                    int end = Math.min(start + divisions, array.length - 1);
+                    quickSort(array, start, end);
+                });
 
-        // Partitioning the array into three parts: less than, equal to, and greater than the pivot
-        int[] less = Arrays.stream(array).filter(i -> i < pivot).toArray();
-        int[] equal = Arrays.stream(array).filter(i -> i == pivot).toArray();
-        int[] greater = Arrays.stream(array).filter(i -> i > pivot).toArray();
-
-        // Recursively sort the 'less' and 'greater' partitions and concatenate the results
-        return Stream.of(
-                quickSortUsingStreams(less),
-                equal,
-                quickSortUsingStreams(greater)
-        ).flatMapToInt(Arrays::stream).toArray();
+        quicksort.mergeSort(array, 0, array.length - 1);
     }
 
     public static void main(String[] args) {
         final int SIZE = 100_000_00; // 100 million elements
-        int numThreads = 1; // Based on available processors
+        int numThreads = 8; // Based on available processors
     
         // Create a random array
         int[] originalArray = createRandomArray(SIZE);
@@ -326,10 +303,10 @@ public class quicksort {
         // QuickSortUsingStreams
         int[] arrayForQuickSortUsingStreams = Arrays.copyOf(originalArray, originalArray.length);
         long startTimeQuickSortUsingStreams = System.currentTimeMillis();
-        int[] sortedArrayUsingStreams = quickSortUsingStreams(arrayForQuickSortUsingStreams);
+        parallelQuickSort(arrayForQuickSortUsingStreams, numThreads);
         long endTimeQuickSortUsingStreams = System.currentTimeMillis();
         System.out.println("QuickSortUsingStreams took: " + (endTimeQuickSortUsingStreams - startTimeQuickSortUsingStreams) + " ms");
-        System.out.println("Is array sorted (QuickSortUsingStreams): " + isArraySorted(sortedArrayUsingStreams));
+        System.out.println("Is array sorted (QuickSortUsingStreams): " + isArraySorted(arrayForQuickSortUsingStreams));
     }
     
 }

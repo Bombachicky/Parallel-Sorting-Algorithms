@@ -2,13 +2,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
 
-class insertionThread extends Thread {
+class bubbleThread extends Thread {
     int[] array;
     int low;
     int high;
     int numThreads;
 
-    insertionThread(int[] array, int low, int high, int numThreads) {
+    bubbleThread(int[] array, int low, int high, int numThreads) {
         this.array = array;
         this.low = low;
         this.high = high;
@@ -17,13 +17,13 @@ class insertionThread extends Thread {
 
     @Override
     public void run() {
-        parallelinsertionSort(array, low, high, numThreads);
+        parallelbubbleSort(array, low, high, numThreads);
     }
 
-    public void parallelinsertionSort(int[] array, int low, int high, int numThreads){
+    public void parallelbubbleSort(int[] array, int low, int high, int numThreads){
 
         if (numThreads <= 1) {
-            insertionsort.insertionSort(array);
+            bubblesort.bubbleSort(array);
         } else {
             // Divide the array into segments and sort each segment in a separate thread
             Thread[] threads = new Thread[numThreads];
@@ -35,7 +35,7 @@ class insertionThread extends Thread {
                     end = high;
                 }
 
-                threads[i] = new insertionThread(array, start, end, 1); // Set numThreads to 1 for these threads
+                threads[i] = new bubbleThread(array, start, end, 1); // Set numThreads to 1 for these threads
                 threads[i].start();
             }
 
@@ -48,18 +48,18 @@ class insertionThread extends Thread {
                 }
             }
 
-            insertionsort.mergeSort(array, low, high);
+            bubblesort.mergeSort(array, low, high);
         }
     }
 }
 
-class insertionExecutor implements Runnable {
+class bubbleExecutor implements Runnable {
     int[] array;
     int low;
     int high;
     int numThreads;
 
-    insertionExecutor(int[] array, int low, int high, int numThreads) {
+    bubbleExecutor(int[] array, int low, int high, int numThreads) {
         this.array = array;
         this.low = low;
         this.high = high;
@@ -68,13 +68,13 @@ class insertionExecutor implements Runnable {
 
     @Override
     public void run() {
-        parallelInsertionSort(array, low, high, numThreads);
+        parallelbubbleSort(array, low, high, numThreads);
     }
 
-    public void parallelInsertionSort(int[] array, int low, int high, int numThreads){
+    public void parallelbubbleSort(int[] array, int low, int high, int numThreads){
 
         if (numThreads <= 1) {
-            insertionsort.insertionSort(array);
+            bubblesort.bubbleSort(array);
         } else {
             // Divide the array into segments and sort each segment in a separate thread
             ExecutorService executor = Executors.newFixedThreadPool(numThreads);
@@ -87,7 +87,7 @@ class insertionExecutor implements Runnable {
                     end = high;
                 }
 
-                executor.submit(new insertionExecutor(array, start, end, 1)); // Set numThreads to 1 for these threads
+                executor.submit(new bubbleExecutor(array, start, end, 1)); // Set numThreads to 1 for these threads
             }
             
             executor.shutdown();
@@ -95,28 +95,28 @@ class insertionExecutor implements Runnable {
 
             }
 
-            insertionsort.mergeSort(array, low, high);
+            bubblesort.mergeSort(array, low, high);
         }
     }
 }
 
-class insertionStreams implements Runnable {
+class bubbleStreams implements Runnable {
 
     int[] array;
     int numThreads;
 
-    insertionStreams(int[] array, int numThreads) {
+    bubbleStreams(int[] array, int numThreads) {
         this.array = array;
         this.numThreads = numThreads;
     }
 
     @Override
     public void run() {
-        parallelInsertionSort(array, numThreads);
+        parallelbubbleSort(array, numThreads);
     }
 
-    // Insertion sort for a chunk
-    private static void insertionSort(int[] array, int start, int end) {
+    // bubble sort for a chunk
+    private static void bubbleSort(int[] array, int start, int end) {
         for (int i = start + 1; i < end; i++) {
             int key = array[i];
             int j = i - 1;
@@ -130,7 +130,7 @@ class insertionStreams implements Runnable {
     }
 
     // Parallel sort method
-    public static void parallelInsertionSort(int[] array, int numThreads) {
+    public static void parallelbubbleSort(int[] array, int numThreads) {
         int divisions = array.length / numThreads;
 
         // Sort each chunk using parallel streams
@@ -139,25 +139,25 @@ class insertionStreams implements Runnable {
                 .forEach(i -> {
                     int start = i * divisions;
                     int end = Math.min(start + divisions, array.length);
-                    insertionSort(array, start, end);
+                    bubbleSort(array, start, end);
                 });
 
-        // Merge sorted chunks - this simplistic approach is sequential
+        // Merge sorted divisions - this simplistic approach is sequential
         // For a fully parallel solution, a more complex parallel merge would be needed
         int[] tempArray = new int[array.length];
-        insertionsort.mergeSort(tempArray, 0, tempArray.length - 1);
+        bubblesort.mergeSort(tempArray, 0, tempArray.length - 1);
         System.arraycopy(tempArray, 0, array, 0, array.length);
     }
     
 }
 
-class insertionForkJoin extends RecursiveAction {
+class bubbleForkJoin extends RecursiveAction {
     int[] array;
     int low;
     int high;
     int numThreads;
 
-    insertionForkJoin(int[] array, int low, int high, int numThreads) {
+    bubbleForkJoin(int[] array, int low, int high, int numThreads) {
         this.array = array;
         this.low = low;
         this.high = high;
@@ -167,17 +167,17 @@ class insertionForkJoin extends RecursiveAction {
     @Override
     protected void compute() {
         if (numThreads <= 1) {
-            insertionsort.insertionSort(array); 
+            bubblesort.bubbleSort(array); 
         } else {
             int mid = low + (high - low) / 2;
-            invokeAll(new insertionForkJoin(array, low, mid, numThreads / 2),
-                      new insertionForkJoin(array, mid + 1, high, numThreads / 2));
+            invokeAll(new bubbleForkJoin(array, low, mid, numThreads / 2),
+                      new bubbleForkJoin(array, mid + 1, high, numThreads / 2));
         }
     }
 }
 
 
-public class insertionsort {
+public class bubblesort {
 
     public static int[] createRandomArray(int size){
         int[] randomArray = new int[size];
@@ -252,76 +252,81 @@ public class insertionsort {
         }
     }
 
-    // Static method to perform insertion sort on an array
-    public static void insertionSort(int[] arr) {
-        for (int i = 1; i < arr.length; i++) {
-            int key = arr[i];
-            int j = i - 1;
-
-            // Move elements of arr[0..i-1], that are greater than key,
-            // to one position ahead of their current position
-            while (j >= 0 && arr[j] > key) {
-                arr[j + 1] = arr[j];
-                j = j - 1;
+    // Method to perform Bubble Sort
+    public static void bubbleSort(int[] arr) {
+        int n = arr.length;
+        boolean swapped;
+        for (int i = 0; i < n - 1; i++) {
+            swapped = false;
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    // Swap arr[j] and arr[j+1]
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                    swapped = true;
+                }
             }
-            arr[j + 1] = key;
+            // If no two elements were swapped by inner loop, then break
+            if (!swapped)
+                break;
         }
     }
 
     public static void main(String[] args) {
         final int SIZE = 100_000; // Use a smaller size for practical execution
-        int numThreads = 8;
+        int numThreads = 1;
 
         // Create a random array
         int[] originalArray = createRandomArray(SIZE);
 
-        // InsertionThread
-        int[] arrayForInsertionThread = Arrays.copyOf(originalArray, originalArray.length);
-        long startTimeInsertionThread = System.currentTimeMillis();
-        insertionThread insertionThreadSorter = new insertionThread(arrayForInsertionThread, 0, arrayForInsertionThread.length - 1, numThreads);
-        insertionThreadSorter.start();
+        // bubbleThread
+        int[] arrayForbubbleThread = Arrays.copyOf(originalArray, originalArray.length);
+        long startTimebubbleThread = System.currentTimeMillis();
+        bubbleThread bubbleThreadSorter = new bubbleThread(arrayForbubbleThread, 0, arrayForbubbleThread.length - 1, numThreads);
+        bubbleThreadSorter.start();
         try {
-            insertionThreadSorter.join();
+            bubbleThreadSorter.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        long endTimeInsertionThread = System.currentTimeMillis();
-        System.out.println("InsertionThread sorting took: " + (endTimeInsertionThread - startTimeInsertionThread) + " ms");
-        System.out.println("Is array sorted (InsertionThread): " + isArraySorted(arrayForInsertionThread));
+        long endTimebubbleThread = System.currentTimeMillis();
+        System.out.println("bubbleThread sorting took: " + (endTimebubbleThread - startTimebubbleThread) + " ms");
+        System.out.println("Is array sorted (bubbleThread): " + isArraySorted(arrayForbubbleThread));
 
-        // InsertionExecutor
-        int[] arrayForInsertionExecutor = Arrays.copyOf(originalArray, originalArray.length);
+        // bubbleExecutor
+        int[] arrayForbubbleExecutor = Arrays.copyOf(originalArray, originalArray.length);
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        long startTimeInsertionExecutor = System.currentTimeMillis();
-        executor.execute(new insertionExecutor(arrayForInsertionExecutor, 0, arrayForInsertionExecutor.length - 1, numThreads));
+        long startTimebubbleExecutor = System.currentTimeMillis();
+        executor.execute(new bubbleExecutor(arrayForbubbleExecutor, 0, arrayForbubbleExecutor.length - 1, numThreads));
         executor.shutdown();
         try {
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        long endTimeInsertionExecutor = System.currentTimeMillis();
-        System.out.println("InsertionExecutor sorting took: " + (endTimeInsertionExecutor - startTimeInsertionExecutor) + " ms");
-        System.out.println("Is array sorted (InsertionExecutor): " + isArraySorted(arrayForInsertionExecutor));
+        long endTimebubbleExecutor = System.currentTimeMillis();
+        System.out.println("bubbleExecutor sorting took: " + (endTimebubbleExecutor - startTimebubbleExecutor) + " ms");
+        System.out.println("Is array sorted (bubbleExecutor): " + isArraySorted(arrayForbubbleExecutor));
 
-        // InsertionStreams
-        int[] arrayForInsertionStreams = Arrays.copyOf(originalArray, originalArray.length);
-        long startTimeInsertionStreams = System.currentTimeMillis();
-        insertionStreams insertionStreamsSorter = new insertionStreams(arrayForInsertionStreams, numThreads);
-        insertionStreamsSorter.run(); // Directly call run for simplicity in demonstration
-        long endTimeInsertionStreams = System.currentTimeMillis();
-        System.out.println("InsertionStreams sorting took: " + (endTimeInsertionStreams - startTimeInsertionStreams) + " ms");
-        System.out.println("Is array sorted (InsertionStreams): " + isArraySorted(arrayForInsertionStreams));
+        // bubbleStreams
+        int[] arrayForbubbleStreams = Arrays.copyOf(originalArray, originalArray.length);
+        long startTimebubbleStreams = System.currentTimeMillis();
+        bubbleStreams bubbleStreamsSorter = new bubbleStreams(arrayForbubbleStreams, numThreads);
+        bubbleStreamsSorter.run(); // Directly call run for simplicity in demonstration
+        long endTimebubbleStreams = System.currentTimeMillis();
+        System.out.println("bubbleStreams sorting took: " + (endTimebubbleStreams - startTimebubbleStreams) + " ms");
+        System.out.println("Is array sorted (bubbleStreams): " + isArraySorted(arrayForbubbleStreams));
 
-        // InsertionForkJoin
-        int[] arrayForInsertionForkJoin = Arrays.copyOf(originalArray, originalArray.length);
+        // bubbleForkJoin
+        int[] arrayForbubbleForkJoin = Arrays.copyOf(originalArray, originalArray.length);
         ForkJoinPool forkJoinPool = new ForkJoinPool(numThreads);
-        long startTimeInsertionForkJoin = System.currentTimeMillis();
-        insertionForkJoin insertionForkJoinSorter = new insertionForkJoin(arrayForInsertionForkJoin, 0, arrayForInsertionForkJoin.length - 1, numThreads);
-        forkJoinPool.invoke(insertionForkJoinSorter);
+        long startTimebubbleForkJoin = System.currentTimeMillis();
+        bubbleForkJoin bubbleForkJoinSorter = new bubbleForkJoin(arrayForbubbleForkJoin, 0, arrayForbubbleForkJoin.length - 1, numThreads);
+        forkJoinPool.invoke(bubbleForkJoinSorter);
         forkJoinPool.shutdown();
-        long endTimeInsertionForkJoin = System.currentTimeMillis();
-        System.out.println("InsertionForkJoin sorting took: " + (endTimeInsertionForkJoin - startTimeInsertionForkJoin) + " ms");
-        System.out.println("Is array sorted (InsertionForkJoin): " + isArraySorted(arrayForInsertionForkJoin));
+        long endTimebubbleForkJoin = System.currentTimeMillis();
+        System.out.println("bubbleForkJoin sorting took: " + (endTimebubbleForkJoin - startTimebubbleForkJoin) + " ms");
+        System.out.println("Is array sorted (bubbleForkJoin): " + isArraySorted(arrayForbubbleForkJoin));
     }
 }
